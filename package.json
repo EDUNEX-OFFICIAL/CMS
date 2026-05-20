@@ -1,0 +1,44 @@
+{
+  "name": "cms-platform",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "test": "vitest run && turbo test",
+    "test:watch": "vitest",
+    "db:migrate": "pnpm --filter @repo/db migrate",
+    "db:generate": "pnpm --filter @repo/db generate",
+    "db:push": "pnpm --filter @repo/db push",
+    "db:seed": "pnpm --filter @repo/db seed",
+    "db:reset": "pnpm --filter @repo/db reset",
+    "db:studio": "pnpm --filter @repo/db studio",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@repo/config": "workspace:*",
+    "eslint": "^9.18.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  }
+}
