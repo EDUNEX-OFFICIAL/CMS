@@ -8,8 +8,13 @@ COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-cms}"
 cd "$APP_DIR"
 
 if [ ! -f .env.production ]; then
-  echo "::error::Missing $APP_DIR/.env.production — copy from .env.production.example"
-  exit 1
+  if [ -f .env.production.example ]; then
+    cp .env.production.example .env.production
+    echo "::warning::Created .env.production from example — update secrets before going live"
+  else
+    echo "::error::Missing $APP_DIR/.env.production — copy from .env.production.example"
+    exit 1
+  fi
 fi
 
 export COMPOSE_PROJECT_NAME

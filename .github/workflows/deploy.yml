@@ -84,7 +84,8 @@ jobs:
             --exclude .next \
             --exclude dist \
             --exclude .env \
-            --exclude '.env.*' \
+            --exclude .env.local \
+            --exclude .env.production \
             --exclude .git \
             --exclude .turbo \
             -e "ssh $SSH_OPTS" \
