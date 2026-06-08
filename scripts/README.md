@@ -1,5 +1,9 @@
 # Scripts
 
-Reserved for setup scripts, migration helpers, and automation utilities.
+| Script                                 | Purpose                                                   |
+| -------------------------------------- | --------------------------------------------------------- |
+| [remote-deploy.sh](./remote-deploy.sh) | Production deploy — build images, migrate DB, start stack |
+
+Installed on the server at `/opt/cms/remote-deploy.sh` and invoked by GitHub Actions after rsync.
 
 See [docs/architecture/REPOSITORY_ARCHITECTURE.md](../docs/architecture/REPOSITORY_ARCHITECTURE.md).

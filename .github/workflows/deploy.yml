@@ -1,0 +1,94 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        default: production
+        type: choice
+        options:
+          - production
+          - staging
+
+concurrency:
+  group: deploy-cms-${{ github.event.inputs.environment || 'production' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Pre-deploy validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+  deploy:
+    name: Deploy to server
+    needs: validate
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ github.event.inputs.environment || 'production' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rsync to server and deploy
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SSH_PRIVATE_KEY:-}" ] || [ -z "${DEPLOY_HOST:-}" ]; then
+            echo "::warning::Deploy skipped — set repository secrets SSH_PRIVATE_KEY and DEPLOY_HOST to enable deployment."
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          KEYFILE="$HOME/.ssh/ci_deploy_key"
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' | sed $'1s/^\xef\xbb\xbf//' > "$KEYFILE"
+          chmod 600 "$KEYFILE"
+          if ! ssh-keygen -y -f "$KEYFILE" >/dev/null 2>&1; then
+            echo "::error::SSH_PRIVATE_KEY is not a valid OpenSSH private key"
+            exit 1
+          fi
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          USER="${DEPLOY_USER:-root}"
+          REMOTE="${DEPLOY_PATH:-/opt/cms/app}"
+          SSH_OPTS="-i $KEYFILE -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes"
+          rsync -az --delete \
+            --exclude node_modules \
+            --exclude .next \
+            --exclude dist \
+            --exclude .env \
+            --exclude '.env.*' \
+            --exclude .git \
+            --exclude .turbo \
+            -e "ssh $SSH_OPTS" \
+            ./ "${USER}@${DEPLOY_HOST}:${REMOTE}/"
+          ssh $SSH_OPTS "${USER}@${DEPLOY_HOST}" \
+            "chmod +x /opt/cms/remote-deploy.sh && APP_DIR='${REMOTE}' /opt/cms/remote-deploy.sh"
+          shred -u "$KEYFILE" 2>/dev/null || rm -f "$KEYFILE"

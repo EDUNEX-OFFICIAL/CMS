@@ -35,16 +35,16 @@ pnpm dev
 
 ## Development URLs
 
-| Application | URL |
-|-------------|-----|
-| Web Dashboard | http://localhost:3000/login |
-| Dashboard (workspaces) | http://localhost:3000/dashboard |
-| Content types | http://localhost:3000/content-types |
-| Entries | http://localhost:3000/entries |
-| Media library | http://localhost:3000/media |
-| Storefront (stub) | http://localhost:3001 |
-| API health | http://localhost:4000/api/v1/health |
-| MinIO Console | http://localhost:9001 |
+| Application            | URL                                 |
+| ---------------------- | ----------------------------------- |
+| Web Dashboard          | http://localhost:3000/login         |
+| Dashboard (workspaces) | http://localhost:3000/dashboard     |
+| Content types          | http://localhost:3000/content-types |
+| Entries                | http://localhost:3000/entries       |
+| Media library          | http://localhost:3000/media         |
+| Storefront (stub)      | http://localhost:3001               |
+| API health             | http://localhost:4000/api/v1/health |
+| MinIO Console          | http://localhost:9001               |
 
 > **PostgreSQL:** Docker maps host port **5433** → container 5432 (avoids conflict with local Postgres on Windows). Use `DATABASE_URL=...@localhost:5433/cms_dev` in `.env.local`.
 
@@ -194,23 +194,47 @@ docker compose -f docker/docker-compose.yml up -d
 docker compose -f docker/docker-compose.yml down -v
 ```
 
-## GitHub setup (manual)
+## CI/CD
 
-After pushing to GitHub:
+| Workflow                               | Trigger                 | What it does                                              |
+| -------------------------------------- | ----------------------- | --------------------------------------------------------- |
+| [CI](.github/workflows/ci.yml)         | PR + push to `main`     | format, lint, typecheck, test, build, Docker image builds |
+| [Deploy](.github/workflows/deploy.yml) | push to `main` + manual | rsync to server, Docker Compose deploy                    |
+
+### GitHub repository secrets (Deploy)
+
+| Secret            | Description                             |
+| ----------------- | --------------------------------------- |
+| `SSH_PRIVATE_KEY` | Deploy key for the production server    |
+| `DEPLOY_HOST`     | Server hostname or IP                   |
+| `DEPLOY_USER`     | SSH user (default: `root`)              |
+| `DEPLOY_PATH`     | App directory (default: `/opt/cms/app`) |
+
+### Server setup (one-time)
+
+```bash
+sudo mkdir -p /opt/cms/app
+sudo cp /opt/cms/app/scripts/remote-deploy.sh /opt/cms/remote-deploy.sh  # after first deploy
+cp .env.production.example .env.production   # on server, fill in secrets
+```
+
+Production stack: `docker compose -f docker-compose.server.yml --env-file .env.production up -d`  
+Gateway: `http://<server>:8082` (API at `/api/v1/health`, dashboard at `/login`).
+
+### Branch protection (recommended)
 
 1. Enable branch protection on `main`
-2. Require PR reviews and CI status checks
-3. CI runs via `.github/workflows/ci.yml` (lint, typecheck, test, build)
+2. Require PR reviews and CI status checks (`validate`, `docker`)
 
 ## Documentation
 
-| Doc | Description |
-| --- | ------------- |
-| [Development Status](./docs/product/DEVELOPMENT_STATUS.md) | Implemented features through Phase 4 |
-| [Web Dashboard Guide](./docs/engineering/WEB_DASHBOARD_GUIDE.md) | Day-to-day admin UI usage |
-| [CMS Data Model](./docs/engineering/CMS_DATA_MODEL.md) | Workspaces, types, entries, assets |
-| [Media Local Setup](./docs/engineering/MEDIA_LOCAL_SETUP.md) | MinIO uploads and CORS |
-| [Phase 4b (future)](./docs/engineering/PHASE_4B_MEDIA_FUTURE.md) | Next media work |
-| [Local Development Setup](./docs/engineering/LOCAL_DEVELOPMENT_SETUP.md) | Full environment onboarding |
-| [Implementation Plan](./docs/product/IMPLEMENTATION_PLAN.md) | Roadmap (Phases 5+) |
-| [Repository Architecture](./docs/architecture/REPOSITORY_ARCHITECTURE.md) | Monorepo layout |
+| Doc                                                                       | Description                          |
+| ------------------------------------------------------------------------- | ------------------------------------ |
+| [Development Status](./docs/product/DEVELOPMENT_STATUS.md)                | Implemented features through Phase 4 |
+| [Web Dashboard Guide](./docs/engineering/WEB_DASHBOARD_GUIDE.md)          | Day-to-day admin UI usage            |
+| [CMS Data Model](./docs/engineering/CMS_DATA_MODEL.md)                    | Workspaces, types, entries, assets   |
+| [Media Local Setup](./docs/engineering/MEDIA_LOCAL_SETUP.md)              | MinIO uploads and CORS               |
+| [Phase 4b (future)](./docs/engineering/PHASE_4B_MEDIA_FUTURE.md)          | Next media work                      |
+| [Local Development Setup](./docs/engineering/LOCAL_DEVELOPMENT_SETUP.md)  | Full environment onboarding          |
+| [Implementation Plan](./docs/product/IMPLEMENTATION_PLAN.md)              | Roadmap (Phases 5+)                  |
+| [Repository Architecture](./docs/architecture/REPOSITORY_ARCHITECTURE.md) | Monorepo layout                      |

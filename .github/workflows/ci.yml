@@ -7,20 +7,28 @@ on:
     branches: [main]
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-cms-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   validate:
+    name: Lint, typecheck, test & build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
           version: 9
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
@@ -39,3 +47,52 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  docker:
+    name: Docker image build
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: false
+          tags: cms-api:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: false
+          tags: cms-web:ci
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://localhost:8082/api
+            NEXT_PUBLIC_FIREBASE_API_KEY=ci-placeholder
+            NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=ci-placeholder.firebaseapp.com
+            NEXT_PUBLIC_FIREBASE_PROJECT_ID=ci-placeholder
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Storefront image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/storefront/Dockerfile
+          push: false
+          tags: cms-storefront:ci
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://localhost:8082/api
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
