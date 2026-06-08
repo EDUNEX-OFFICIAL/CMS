@@ -219,7 +219,8 @@ cp .env.production.example .env.production   # on server, fill in secrets
 ```
 
 Production stack: `docker compose -f docker-compose.server.yml --env-file .env.production up -d`  
-Gateway: `http://<server>:8082` (API at `/api/v1/health`, dashboard at `/login`).
+Production: **https://admin.edunexservices.in** (API at `/api/v1/health`, dashboard at `/login`).  
+Internal gateway port: `8082` (proxied by Caddy).
 
 ### Branch protection (recommended)
 
