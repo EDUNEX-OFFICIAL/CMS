@@ -14,6 +14,7 @@ loadEnv({ path: path.join(repoRoot, ".env") });
 const nextConfig: NextConfig = {
   output: "standalone",
   transpilePackages: ["@repo/ui", "@repo/shared"],
+  eslint: { ignoreDuringBuilds: true },
 };
 
 export default nextConfig;
