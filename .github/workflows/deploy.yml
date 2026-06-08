@@ -77,7 +77,7 @@ jobs:
           fi
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
           USER="${DEPLOY_USER:-root}"
-          REMOTE="${DEPLOY_PATH:-/opt/cms/app}"
+          REMOTE="${DEPLOY_PATH:-/srv/CMS}"
           SSH_OPTS="-i $KEYFILE -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes"
           rsync -az --delete \
             --exclude node_modules \
@@ -91,5 +91,5 @@ jobs:
             -e "ssh $SSH_OPTS" \
             ./ "${USER}@${DEPLOY_HOST}:${REMOTE}/"
           ssh $SSH_OPTS "${USER}@${DEPLOY_HOST}" \
-            "chmod +x /opt/cms/remote-deploy.sh && APP_DIR='${REMOTE}' /opt/cms/remote-deploy.sh"
+            "chmod +x /srv/CMS/scripts/remote-deploy.sh && APP_DIR='${REMOTE}' /srv/CMS/scripts/remote-deploy.sh"
           shred -u "$KEYFILE" 2>/dev/null || rm -f "$KEYFILE"

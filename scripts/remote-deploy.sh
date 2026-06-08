@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-APP_DIR="${APP_DIR:-/opt/cms/app}"
+APP_DIR="${APP_DIR:-/srv/CMS}"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.server.yml}"
 COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-cms}"
 
@@ -51,4 +51,8 @@ done
 
 curl -fsS http://127.0.0.1:8082/api/v1/health
 echo ""
+
+echo "Restarting CMS gateway to refresh upstream DNS..."
+"${COMPOSE[@]}" restart cms-gateway
+
 "${COMPOSE[@]}" ps

@@ -203,18 +203,18 @@ docker compose -f docker/docker-compose.yml down -v
 
 ### GitHub repository secrets (Deploy)
 
-| Secret            | Description                             |
-| ----------------- | --------------------------------------- |
-| `SSH_PRIVATE_KEY` | Deploy key for the production server    |
-| `DEPLOY_HOST`     | Server hostname or IP                   |
-| `DEPLOY_USER`     | SSH user (default: `root`)              |
-| `DEPLOY_PATH`     | App directory (default: `/opt/cms/app`) |
+| Secret            | Description                          |
+| ----------------- | ------------------------------------ |
+| `SSH_PRIVATE_KEY` | Deploy key for the production server |
+| `DEPLOY_HOST`     | Server hostname or IP                |
+| `DEPLOY_USER`     | SSH user (default: `root`)           |
+| `DEPLOY_PATH`     | App directory (default: `/srv/CMS`)  |
 
 ### Server setup (one-time)
 
 ```bash
-sudo mkdir -p /opt/cms/app
-sudo cp /opt/cms/app/scripts/remote-deploy.sh /opt/cms/remote-deploy.sh  # after first deploy
+sudo mkdir -p /srv/CMS
+chmod +x /srv/CMS/scripts/remote-deploy.sh
 cp .env.production.example .env.production   # on server, fill in secrets
 ```
 

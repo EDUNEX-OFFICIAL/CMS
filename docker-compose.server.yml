@@ -4,7 +4,7 @@ services:
     image: nginx:alpine
     restart: always
     ports:
-      - "8082:80"
+      - "127.0.0.1:8082:80"
     volumes:
       - ./infrastructure/nginx/cms-gateway.conf:/etc/nginx/nginx.conf:ro
     depends_on:
@@ -16,6 +16,7 @@ services:
         condition: service_healthy
     networks:
       - cms_network
+      - edge_proxy
     healthcheck:
       test: ["CMD", "nginx", "-t"]
       interval: 30s
@@ -160,6 +161,9 @@ services:
 networks:
   cms_network:
     driver: bridge
+  edge_proxy:
+    external: true
+    name: green-city_default
 
 volumes:
   cms_postgres_data:
